@@ -18,7 +18,7 @@ function App() {
     setMessage("");
 
     try {
-      const res = await fetch("http://localhost:8000/generate-recipe", {
+      const res = await fetch("https://chefbot-2-li8u.onrender.com/generate-recipe", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
