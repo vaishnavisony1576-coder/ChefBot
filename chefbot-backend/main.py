@@ -14,7 +14,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://chef-bot-pi.vercel.app"
+        "https://chef-bot-oldversion.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
