@@ -1,82 +1,242 @@
-# 🍳 ChefBot - AI Recipe Generator
+# 🍳 ChefBot AI – Intelligent Recipe Planning Agent
 
-ChefBot is a full-stack AI-powered web application that generates recipes based on user-provided ingredients. It combines a modern frontend, scalable backend, and generative AI to deliver structured cooking suggestions in real time.
+## 📌 Overview
+
+ChefBot AI is an intelligent AI agent that generates complete meal plans based on user queries. Unlike a simple chatbot, it can **plan meals, fetch recipe data, and remember user preferences** to provide personalized food recommendations.
 
 ---
 
-## 🚀 Features
+## 🤖 Agent Capabilities
 
-- Generate 2–3 recipes from given ingredients  
-- Structured output (Recipe Name, Ingredients, Steps)  
-- Chat-based interactive UI  
-- Real-time AI-powered responses  
-- Fully deployed frontend and backend  
+### 1. Multi-Step Planning & Execution
+
+* Understands user query (e.g., “spicy Indian dinner”)
+* Breaks it into:
+
+  * Cuisine
+  * Diet
+  * Meal type
+* Generates structured meal plan:
+
+  * Starter
+  * Main Course
+  * Dessert
+* Ensures logical and complete output
+
+---
+
+### 2. Tool/API Integration
+
+* Uses external APIs:
+
+  * Gemini API → generates recipes & structured plan
+  * Pexels API → fetches food images
+* Handles API errors with fallback messages
+* Formats response for UI display
+
+---
+
+### 3. Memory & Decision Making
+
+* Stores user preferences:
+
+  * Cuisine
+  * Diet
+  * Taste (spicy, healthy, etc.)
+* Saves memory per user (JSON-based storage)
+* Uses memory to personalize future responses
+
+---
+
+## ⚙️ How It Works
+
+1. User enters query (e.g., “healthy breakfast”)
+2. System processes:
+
+   * Extracts intent using LLM
+   * Reads previous memory
+3. LLM generates:
+
+   * Structured meal plan
+   * Preferences
+4. Backend:
+
+   * Updates memory
+   * Fetches images
+5. Frontend:
+
+   * Displays cards with recipes
+   * Shows detailed view on click
+
+---
+
+## 🏗️ System Architecture
+
+Based on the AI Agent model (Perception → Reasoning → Action → Memory) :
+
+```
+User Input
+   ↓
+Frontend (React UI)
+   ↓
+FastAPI Backend
+   ↓
+┌───────────────┐
+│ PERCEPTION    │ → Understand query
+└───────────────┘
+         ↓
+┌───────────────┐
+│ REASONING     │ → Plan meals (LLM)
+└───────────────┘
+         ↓
+┌───────────────┐
+│ ACTION        │ → Fetch images (API)
+└───────────────┘
+         ↓
+┌───────────────┐
+│ MEMORY        │ → Store preferences
+└───────────────┘
+         ↓
+Frontend Display
+```
+
+---
+
+## 🖥️ Frontend Features
+
+* Modern UI with Bootstrap
+* Interactive recipe cards
+* Click-to-expand modal view
+* Status indicators:
+
+  * Planning
+  * Ready
+  * Error
+* Example queries for quick testing
+* Memory display (optional)
+
+---
+
+## 📸 Output Screenshots
+
+### 🔹 Home Screen
+
+* Input field
+* Example queries
+* Generate button
+
+### 🔹 Recipe Cards
+
+* Image + dish name
+* Clean uniform layout
+
+### 🔹 Modal View
+
+* Ingredients (left aligned)
+* Step-by-step instructions
+* Centered popup with blur background
+
+*(Add your screenshots here in GitHub using images)*
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Frontend
-- React (Vite)
-- JavaScript (ES6+)
-- Bootstrap
-- Fetch API
+* Frontend: React + Bootstrap
+* Backend: FastAPI (Python)
+* AI Model: Gemini API
+* APIs:
 
-### Backend
-- FastAPI (Python)
-- Uvicorn (ASGI Server)
-- Pydantic
-
-### AI Integration
-- Google Gemini API (`google.genai` SDK)
-
-### Deployment
-- Frontend: Vercel - https://chef-bot-pi.vercel.app/
-- Backend: Render - https://chefbot-2-li8u.onrender.com
+  * Pexels (images)
+* Storage: JSON-based memory system
 
 ---
 
-## 🧠 System Architecture
+## ⚡ Setup Instructions
 
-The application follows a client-server architecture with AI integration:
+### 1. Clone Repository
 
-User (Browser)  
-↓  
-Frontend (React UI)  
-↓ HTTP Request (POST /generate-recipe)  
-Backend (FastAPI Server)  
-↓  
-Gemini AI API (LLM Processing)  
-↓  
-Backend (Response Handling)  
-↓  
-Frontend (UI Rendering)  
-↓  
-User (Recipe Output)  
+```bash
+git clone <[your-repo-link](https://github.com/vaishnavisony1576-coder/ChefBot)>
+cd chefbot
+```
 
----
+### 2. Backend Setup
 
-## 🔄 Workflow
+```bash
+cd backend
+pip install -r requirements.txt
+```
 
-1. User enters ingredients in the chat interface  
-2. Frontend sends POST request to backend  
-3. Backend receives input and constructs prompt  
-4. Backend sends request to Gemini API  
-5. Gemini generates recipes  
-6. Backend receives response  
-7. Frontend displays formatted output  
+Create `.env`:
 
----
+```
+GEMINI_API_KEY=your_api_key
+PEXELS_API_KEY=your_api_key
+```
 
-### Output Screenshots
+Run:
 
-<img width="959" height="476" alt="Screenshot 2026-06-20 152728" src="https://github.com/user-attachments/assets/a63a5d60-28ee-4a16-996a-2d75d261236d" />
-
-<img width="953" height="473" alt="image" src="https://github.com/user-attachments/assets/d1d88461-94e1-431c-a170-72fde99b1121" />
+```bash
+uvicorn main:app --reload
+```
 
 ---
 
-### Author 
+### 3. Frontend Setup
 
- Vaishnavi Gungone
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
+---
+
+## 🌐 Deployment
+
+* Frontend: Vercel
+* Backend: Render
+
+Live URL:
+👉https://chef-bot-pi.vercel.app/
+
+---
+
+## 🔌 API Used
+
+* Gemini API → Recipe generation
+* Pexels API → Food images
+
+---
+
+## 👩‍💻 Author
+
+Vaishnavi
+
+---
+
+## 🚀 Project Highlights
+
+* Fully functional AI Agent (not just chatbot)
+* Memory-based personalization
+* Real API integration
+* Clean UI with interactive UX
+* Error handling & fallback system
+
+---
+
+## 📌 Example Queries
+
+* spicy indian dinner
+* healthy breakfast
+* veg lunch
+* high protein meal
+
+---
+
+## 🎯 Conclusion
+
+ChefBot AI demonstrates the transition from a simple chatbot to a **full AI agent capable of planning, acting, and remembering**, fulfilling all milestone requirements.
+
+---
