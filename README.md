@@ -120,23 +120,24 @@ Frontend Display
 ## 📸 Output Screenshots
 
 ### 🔹 Home Screen
-
-* Input field
-* Example queries
-* Generate button
+<img width="958" height="433" alt="image" src="https://github.com/user-attachments/assets/ee89f694-603d-44d4-a02d-15ab68019cf3" />
 
 ### 🔹 Recipe Cards
+#### Starter
+<img width="1097" height="507" alt="Starter" src="https://github.com/user-attachments/assets/d3760d86-084f-4562-a8e4-9a96416f2bd7" />
 
-* Image + dish name
-* Clean uniform layout
+#### MainCourse
+<img width="1101" height="506" alt="Main Course" src="https://github.com/user-attachments/assets/cdef0be4-55a5-4d2b-90a4-5e75ae167f6d" />
+
+#### Dessert
+<img width="1098" height="508" alt="Dessert" src="https://github.com/user-attachments/assets/64527258-e399-4b1a-94a5-972b01694e59" />
+
+
 
 ### 🔹 Modal View
 
-* Ingredients (left aligned)
-* Step-by-step instructions
-* Centered popup with blur background
+<img width="1102" height="506" alt="Model Page" src="https://github.com/user-attachments/assets/57847a68-9bad-4103-b348-d6a236b89af0" />
 
-*(Add your screenshots here in GitHub using images)*
 
 ---
 
