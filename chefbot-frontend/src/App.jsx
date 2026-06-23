@@ -42,35 +42,46 @@ const showItems = (items) => {
 };
 
   const generate = async () => {
-    try {
-      setStatus("loading");
-
-      const res = await fetch("http://127.0.0.1:8000/agent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query,
-          user_id: userId,
-        }),
-      });
-
-      const result = await res.json();
-      if (result.error) {
-        setStatus("error");
-        setErrorMsg(result.error); 
-        setData(null);
-        return;
-      }
-      setData(result);
-      setStatus("done");
-    } catch (e) {
-  console.log(e);
+  if (!query.trim()) {
   setStatus("error");
-  setErrorMsg("⚠️ Please try again later");
+  setErrorMsg("⚠️ Please enter something");
+  return;
 }
-  };
+  if (status === "loading") return;  // 🔥 ADD THIS
+
+  try {
+    setStatus("loading");
+    setErrorMsg("");
+
+    const res = await fetch("https://chefbot-2-li8u.onrender.com/agent", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query,
+        user_id: userId,
+      }),
+    });
+
+    const result = await res.json();
+
+    if (result.error) {
+      setStatus("error");
+      setErrorMsg(result.error);
+      setData(null);
+      return;
+    }
+
+    setData(result);
+    setStatus("done");
+
+  } catch (e) {
+    console.log(e);
+    setStatus("error");
+    setErrorMsg("⚠️ Please try again later");
+  }
+};
 
 
   const plan = data?.structured_output?.plan;
@@ -98,12 +109,16 @@ const showItems = (items) => {
             "quick snacks"
           ].map((q, i) => (
             <button
-              key={i}
-              className="btn btn-outline-light rounded-pill px-3 py-1 try-btn"
-              onClick={() => setQuery(q)}
-            >
-              {q}
-            </button>
+            key={i}
+            className="btn btn-outline-light rounded-pill px-3 py-1 try-btn"
+            disabled={status === "loading"}
+            onClick={() => {
+              if (status === "loading") return;
+              setQuery(q);
+            }}
+          >
+            {q}
+          </button>
           ))}
         </div>
       </div>
@@ -114,7 +129,11 @@ const showItems = (items) => {
           className="form-control w-50 shadow"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && generate()}
+          onKeyDown={(e) => {
+          if (e.key === "Enter" && status !== "loading") {
+            generate();
+          }
+        }}
           placeholder="Try: spicy indian dinner..."
         />
         <button className="btn btn-warning ms-2 shadow" onClick={generate}>

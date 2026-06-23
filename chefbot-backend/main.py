@@ -137,10 +137,16 @@ Rules:
 def chat(request: RecipeRequest):
     try:
         memory = load_memory(request.user_id)
+        print("LOADED MEMORY:", memory)
         context = f"""
         Previous memory:
         {json.dumps(memory)}
-        Use this to understand user preferences.
+
+        IMPORTANT:
+        If the user does not specify cuisine, diet, meal_type, or preferences,
+        use the values stored in memory.
+
+        Only override memory when the user explicitly provides new values.
         """
         
         # 🔥 LLM CALL
@@ -149,6 +155,8 @@ def chat(request: RecipeRequest):
                 f"{context}\n\n{PROMPT}\n\nUser: {request.query}"
             )
             text = response.text.strip()
+            print("RAW GEMINI RESPONSE:")
+            print(text)
         except Exception as e:
             print("Gemini Error:", e)
             return {
@@ -166,19 +174,22 @@ def chat(request: RecipeRequest):
                 return result
         except:
             print("⚠️ Invalid JSON from LLM")
-
+            
             result = {
                 "diet": "veg",
                 "cuisine": "indian",
                 "meal_type": "dinner",
                 "preferences": [],
-                "new_preferences": [],
                 "plan": {
                     "starter": [],
                     "main": [],
                     "dessert": []
                 }
             }
+            return {
+            "error": "⚠️ Please try again later"
+        }
+
                 
         if result.get("cuisine"):
             memory["cuisine"] = result["cuisine"]
@@ -192,7 +203,7 @@ def chat(request: RecipeRequest):
         if "preferences" not in memory or not isinstance(memory["preferences"], list):
             memory["preferences"] = []
             
-        new_prefs = result.get("new_preferences", [])
+        new_prefs = result.get("preferences", [])
 
         # ensure new_prefs is list
         if not isinstance(new_prefs, list):
@@ -205,6 +216,7 @@ def chat(request: RecipeRequest):
                 
         print("NEW PREFS:", new_prefs)
         print("UPDATED MEMORY:", memory)
+        print("MEMORY BEFORE SAVE:", memory)
         save_memory(request.user_id, memory)
         
         meal_type = result.get("meal_type", "").lower()

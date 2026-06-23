@@ -1,1 +1,8 @@
-{}
+{
+    "cuisine": "indian",
+    "diet": "veg",
+    "meal_type": "dinner",
+    "preferences": [
+        "spicy"
+    ]
+}
