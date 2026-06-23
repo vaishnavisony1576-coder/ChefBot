@@ -1,146 +1,204 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import "./App.css";
 
 function App() {
-  const [message, setMessage] = useState("");
-  const [chat, setChat] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const bottomRef = useRef();
+  const [query, setQuery] = useState("");
+  const [data, setData] = useState(null);
+  const [status, setStatus] = useState("idle");
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [errorMsg, setErrorMsg] = useState("");
+  const userId =
+    localStorage.getItem("user_id") ||
+    "user_" + Math.random().toString(36).substring(2);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chat]);
+  localStorage.setItem("user_id", userId);
 
-  const sendRequest = async () => {
-    if (!message) return;
+const showItems = (items) => {
+  if (!items || items.length === 0)
+    return <p className="text-muted">No items</p>;
 
-    setChat((prev) => [...prev, { type: "user", text: message }]);
-    setLoading(true);
-    setMessage("");
+  return items.map((item, index) => (
+    <div
+      key={`${item.name}-${index}`}
+      className="card m-3 p-2 shadow"
+      style={{
+        width: "18rem",
+        cursor: "pointer",
+        transition: "0.3s",
+      }}
+      onClick={() => setSelectedItem(item)}
+    >
+      <img
+        src={item.image || "https://via.placeholder.com/300"}
+        className="card-img-top"
+        style={{ borderRadius: "10px" }}
+      />
 
+      <div className="card-body">
+        <h5>{item.name}</h5>
+      </div>
+    </div>
+  ));
+};
+
+  const generate = async () => {
     try {
-      const res = await fetch("https://chefbot-2-li8u.onrender.com/generate-recipe", {
+      setStatus("loading");
+
+      const res = await fetch("http://127.0.0.1:8000/agent", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ query: message })
+        body: JSON.stringify({
+          query,
+          user_id: userId,
+        }),
       });
 
-      const data = await res.json();
-
-      setChat((prev) => [
-        ...prev,
-        { type: "bot", text: data.recipe || data.error }
-      ]);
-
-    } catch {
-      setChat((prev) => [
-        ...prev,
-        { type: "bot", text: "❌ Server error" }
-      ]);
-    }
-
-    setLoading(false);
+      const result = await res.json();
+      if (result.error) {
+        setStatus("error");
+        setErrorMsg(result.error); 
+        setData(null);
+        return;
+      }
+      setData(result);
+      setStatus("done");
+    } catch (e) {
+  console.log(e);
+  setStatus("error");
+  setErrorMsg("⚠️ Please try again later");
+}
   };
 
+
+  const plan = data?.structured_output?.plan;
+  const memory = data?.memory;
+
   return (
-    <div className="container mt-4">
+    <div className="min-vh-100 d-flex flex-column justify-content-between text-center">
 
-      <h2 className="text-center mb-3">🍳 ChefBot Assistant</h2>
+      {/* 🔥 HEADER */}
+      <h1 className="fw-bold display-5 mt-5">🍳 ChefBot AI</h1>
+      <p className="text-light">
+      Your intelligent recipe planner with memory & AI suggestions
+      </p>
 
-      <p className="text-center text-muted">
-  ChefBot is an AI-powered cooking assistant that suggests recipes based on ingredients you have at home.
-</p>
+      {/* 🔥 EXAMPLE QUERIES */}
+      <div className="mb-4">
+        <p className="text-light fw-bold">✨ Try these:</p>
 
-      <div className="card shadow" style={{ height: "380px", overflowY: "auto" }}>
-        <div className="card-body">
-
-          {chat.map((msg, i) => (
-            <div key={i} className={`d-flex mb-2 ${msg.type === "user" ? "justify-content-end" : "justify-content-start"}`}>
-              
-              <div
-  className={`p-3 rounded ${
-    msg.type === "user" ? "bg-success text-white" : "bg-light"
-  }`}
-  style={{
-    maxWidth: "75%",
-    textAlign: msg.type === "user" ? "right" : "left",
-    whiteSpace: "pre-wrap",
-    wordWrap: "break-word",
-    overflowWrap: "break-word"
-  }}
->
-   {msg.text.split("\n").map((line, i) => {
-    
-    // Recipe Name (big + bold)
-    if (line.toLowerCase().includes("recipe name:")) {
-      return (
-        <h5 key={i} style={{ fontWeight: "bold", marginTop: "10px" }}>
-          {line.replace(/^\d+\.\s*/, "")}
-        </h5>
-      );
-    }
-
-    // Subheadings (Ingredients / Steps)
-    if (
-      line.toLowerCase().includes("ingredients:") ||
-      line.toLowerCase().includes("steps:")
-    ) {
-      return (
-        <p key={i} style={{ fontWeight: "bold", marginTop: "10px" }}>
-          {line}
-        </p>
-      );
-    }
-
-    // Normal text
-    return <p key={i}>{line}</p>;
-  })}
-</div>
-
-            </div>
+        <div className="d-flex justify-content-center flex-wrap gap-2">
+          {[
+            "spicy indian dinner",
+            "healthy breakfast",
+            "veg lunch",
+            "high protein meal",
+            "quick snacks"
+          ].map((q, i) => (
+            <button
+              key={i}
+              className="btn btn-outline-light rounded-pill px-3 py-1 try-btn"
+              onClick={() => setQuery(q)}
+            >
+              {q}
+            </button>
           ))}
-
-          {loading && (
-            <p className="text-center text-muted">👨‍🍳 Cooking recipes...</p>
-          )}
-
-          <div ref={bottomRef}></div>
-
         </div>
       </div>
 
-      <div className="input-group mt-3">
+      {/* 🔥 INPUT */}
+        <div className="d-flex justify-content-center mb-4">
         <input
-  type="text"
-  className="form-control"
-  placeholder="Try: paneer, rice, butter..."
-  value={message}
-  onChange={(e) => setMessage(e.target.value)}
-  onKeyDown={(e) => {
-    if (e.key === "Enter") {
-      sendRequest();
-    }
-  }}
-/>
-        <button className="btn btn-dark" onClick={sendRequest}>
-          Send
+          className="form-control w-50 shadow"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && generate()}
+          placeholder="Try: spicy indian dinner..."
+        />
+        <button className="btn btn-warning ms-2 shadow" onClick={generate}>
+          Generate 🍽️
         </button>
       </div>
-        <div className="mt-3 p-3 bg-light rounded text-start">
-  <h6><strong>💡 Try asking:</strong></h6>
-  <ol style={{ marginBottom: 0 }}>
-    <li>I have paneer and rice, suggest recipes</li>
-    <li>What can I cook with chicken and butter?</li>
-    <li>Give me a quick breakfast using eggs</li>
-    <li>Suggest a spicy Indian recipe with potatoes</li>
-    <li>Easy dinner recipe with vegetables</li>
-  </ol>
-</div>
-      <footer className="text-center mt-3 text-muted">
-        Built by Vaishnavi Gungone | Built for GenAI Internship
-      </footer>
 
+
+      {/* 🔥 STATUS */}
+      <div className="mb-3">
+        {status === "loading" && <p className="text-warning text-white">⚙️ Planning your meal...</p>}
+        {status === "done" && <p className="text-success text-white">✅ Ready!</p>}
+        {status === "error" && (<p className="text-warning fw-bold">{errorMsg}</p>)}
+      </div>
+
+      {/* 🔥 MEMORY */}
+
+      {/* 🔥 OUTPUT */}
+      {plan && (
+        <>
+          <h3 className="text-warning text-white bold">🥗 Starter</h3>
+          <div className="d-flex flex-wrap justify-content-center">
+            {showItems(plan.starter)}
+          </div>
+
+          <h3 className="text-warning text-white">🍛 Main Course</h3>
+          <div className="d-flex flex-wrap justify-content-center">
+            {showItems(plan.main)}
+          </div>
+
+          <h3 className="text-warning text-white">🍰 Dessert</h3>
+          <div className="d-flex flex-wrap justify-content-center">
+            {showItems(plan.dessert)}
+          </div>
+        </>
+      )}
+
+      {selectedItem && (
+        <div className="modal-overlay" onClick={() => setSelectedItem(null)}>
+          
+          <div className="modal-card text-start" onClick={(e) => e.stopPropagation()}>
+            
+            <img
+              src={selectedItem.image || "https://via.placeholder.com/300"}
+              className="modal-img"
+            />
+
+            <h3 className="text-start">{selectedItem.name}</h3>
+
+            <p className="fw-bold mt-3" ><b>Ingredients:</b></p>
+            <ul className = "ps-3">
+              {Array.isArray(selectedItem.ingredients)
+                ? selectedItem.ingredients.map((i, idx) => (
+                    <li key={idx}>{i}</li>
+                  ))
+                : <li>No ingredients</li>}
+            </ul>
+
+            <p className="fw-bold mt-3" ><b>Steps:</b></p>
+            <ol className = "ps-3">
+              {Array.isArray(selectedItem.steps)
+                ? selectedItem.steps.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))
+                : <li>No steps</li>}
+            </ol>
+
+            <button
+              className="btn btn-danger mt-2"
+              onClick={() => setSelectedItem(null)}
+            >
+              Close
+            </button>
+
+          </div>
+        </div>
+      )}
+
+      {/* 🔥 FOOTER */}
+      <footer className="mt-5 text-center text-light">
+      <p>
+        Vaishnavi | Built for GENAI Internship
+      </p>
+    </footer>
     </div>
   );
 }

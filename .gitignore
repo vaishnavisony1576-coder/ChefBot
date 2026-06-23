@@ -1,18 +1,39 @@
-# Python
-.venv/
+# 🔥 Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.db
 
-# Env variables
+# 🔥 Virtual Environment
+.venv/
+venv/
+env/
+
+# 🔥 Environment Variables (VERY IMPORTANT)
 .env
 
-# Node
-node_modules/
+# 🔥 VS Code
+.vscode/
 
-# Build
+# 🔥 OS Files
+.DS_Store
+Thumbs.db
+
+# 🔥 Logs
+*.log
+
+# 🔥 Node (React frontend)
+node_modules/
 dist/
 build/
 
-# OS / Editor
-.vscode/
-.DS_Store
+# 🔥 Vite
+.vite/
+
+# 🔥 Memory Folder (your custom)
+memory/
+
+# 🔥 API keys / secrets
+*.pem
+*.key

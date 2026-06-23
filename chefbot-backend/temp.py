@@ -1,86 +1,143 @@
 
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from dotenv import load_dotenv
-from google.genai import Client
-import os
+import { useState, useEffect, useRef } from "react";
 
-# Load env
-load_dotenv()
+function App() {
+  const [message, setMessage] = useState("");
+  const [chat, setChat] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef();
 
-# FastAPI app
-app = FastAPI(
-    title="ChefBot API",
-    description="AI Recipe Generator",
-    version="1.0.0"
-)
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chat]);
 
-# CORS (for React later)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173"
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+  const sendRequest = async () => {
+    if (!message.trim()) return;
 
-# Gemini Client
-client = Client(api_key=os.getenv("GEMINI_API_KEY"))
+    setChat((prev) => [...prev, { type: "user", text: message }]);
+    setLoading(true);
+    setMessage("");
 
-# System Prompt
-SYSTEM_PROMPT = """
-You are ChefBot, an AI cooking assistant.
+    try {
+      const res = await fetch("http://127.0.0.1:8000/agent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ query: message })
+      });
 
-You ONLY answer food and recipe-related questions.
+      const data = await res.json();
 
-You help users with:
-- Recipes based on ingredients
-- Cooking steps
-- Cuisine suggestions
-- Diet-based recipes (veg, vegan, etc.)
+      if (data.error) {
+        throw new Error("Backend error");
+      }
 
-If a question is unrelated to cooking,
-politely refuse.
+      if (!data.recipes) {
+        throw new Error("No recipes returned");
+      }
 
-Format:
-1. Recipe Name
-2. Ingredients (bullet points)
-3. Steps (numbered)
-"""
+      const recipes = data.recipes;
 
-# Request Model
-class ChatRequest(BaseModel):
-    message: str
+      let text = "";
 
-# Health check
-@app.get("/")
-def health():
-    return {
-        "status": "online",
-        "service": "ChefBot API"
-    }
+      if (recipes) {
+        text += "🍽 Starter:\n";
+        recipes.starter.forEach((r) => {
+          text += "• " + r.strMeal + "\n";
+        });
 
-# Chat endpoint
-@app.post("/generate-recipe")
-def chat(request: ChatRequest):
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",   # ✅ working model
-            contents=f"{SYSTEM_PROMPT}\n\nUser: {request.query}"
-        )
+        text += "\n🍛 Main:\n";
+        recipes.main.forEach((r) => {
+          text += "• " + r.strMeal + "\n";
+        });
 
-        return {
-            "reply": response.text
+        text += "\n🍰 Dessert:\n";
+        if (recipes.dessert.length === 0) {
+          text += "• No dessert\n";
+        } else {
+          recipes.dessert.forEach((r) => {
+            text += "• " + r.strMeal + "\n";
+          });
         }
+      }
 
-    except Exception as e:
-        print("Error:", e)
+      setChat((prev) => [
+        ...prev,
+        { type: "bot", text }
+      ]);
 
-    return {
-        "reply": str(e)
+    } catch (error) {
+      setChat((prev) => [
+        ...prev,
+        { type: "bot", text: "❌ Backend not running or error" }
+      ]);
+      console.log(error);
     }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="container mt-4">
+
+      <h2 className="text-center mb-3">ChefBot Assistant</h2>
+
+      <div className="card shadow" style={{ height: "380px", overflowY: "auto" }}>
+        <div className="card-body">
+
+          {chat.map((msg, i) => (
+            <div key={i} className={`d-flex mb-2 ${msg.type === "user" ? "justify-content-end" : "justify-content-start"}`}>
+              
+              <div
+                className={`p-3 rounded ${
+                  msg.type === "user" ? "bg-success text-white" : "bg-light"
+                }`}
+                style={{
+                  maxWidth: "75%",
+                  whiteSpace: "pre-wrap"
+                }}
+              >
+                {msg.text}
+              </div>
+
+            </div>
+          ))}
+
+          {loading && (
+            <p className="text-center text-muted">👨‍🍳 Cooking...</p>
+          )}
+
+          <div ref={bottomRef}></div>
+
+        </div>
+      </div>
+
+      <div className="input-group mt-3">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Try: indian dinner, american lunch..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              sendRequest();
+            }
+          }}
+        />
+        <button className="btn btn-dark" onClick={sendRequest}>
+          Send
+        </button>
+      </div>
+
+      <footer className="text-center mt-3 text-muted">
+        Built by Vaishnavi | ChefBot 🍳
+      </footer>
+
+    </div>
+  );
+}
+
+export default App;

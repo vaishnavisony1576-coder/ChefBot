@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ChefBot</title>
+
+<style>
+body{
+  font-family: Arial;
+  background: linear-gradient(to right,#7468a5,#91a8f4);
+  color:rgb(255, 255, 255);
+  text-align:center;
+}
+
+input{
+  width:60%;
+  padding:12px;
+  border-radius:20px;
+  border:none;
+}
+
+button{
+  padding:12px;
+  border:none;
+  border-radius:20px;
+  background:coral;
+  color:white;
+}
+
+.grid{
+  display:flex;
+  gap:15px;
+  justify-content:center;
+  margin-top:20px;
+}
+
+.card {
+  width: 300px;
+  max-height: 500px;
+  overflow-y: auto;
+
+  background: rgb(85, 81, 81);
+  border-radius: 15px;
+  padding: 15px;
+  margin: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+
+  display: inline-block;
+  vertical-align: top;
+}
+
+img{
+  width:100%;
+  border-radius:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>ChefBot</h1>
+
+<input id="query" placeholder="Try: indian dinner"
+onkeypress="if(event.key==='Enter'){generate()}">
+
+<button onclick="generate()">Generate</button>
+
+<p id="status"></p>
+
+<h2>Starter</h2>
+<div id="starter" class="grid"></div>
+
+<h2>Main</h2>
+<div id="main" class="grid"></div>
+
+<h2>Dessert</h2>
+<div id="dessert" class="grid"></div>
+
+<p id="memory"></p>
+
+<script>
+
+async function generate(){
+
+document.getElementById("status").innerText="⏳ Loading...";
+
+try{
+const userId = localStorage.getItem("user_id") || "user_" + Math.random();
+localStorage.setItem("user_id", userId);
+const res = await fetch("http://127.0.0.1:8000/agent",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body: JSON.stringify({
+  query: document.getElementById("query").value,
+  user_id: userId
+})
+});
+
+const data = await res.json();
+
+if (!data.structured_output || !data.structured_output.plan) {
+  document.getElementById("status").innerText = "❌ Invalid response";
+  console.log(data);
+  return;
+}
+
+const plan = data.structured_output.plan;
+
+document.getElementById("status").innerText = "✅ Done";
+
+showLLM("starter", plan.starter);
+showLLM("main", plan.main);
+showLLM("dessert", plan.dessert);
+
+}catch(e){
+
+document.getElementById("status").innerText= e.message;;
+console.log(e);
+
+}
+}
+function show(id, items){
+
+const div = document.getElementById(id);
+div.innerHTML = "";
+
+if(!items || items.length === 0){
+  div.innerHTML = "<p>No items</p>";
+  return;
+}
+
+items.forEach(item => {
+
+  // ✅ Ingredients with measure
+  let ingredients = "";
+
+  for(let i = 1; i <= 20; i++){
+    const ing = item[`strIngredient${i}`];
+    const measure = item[`strMeasure${i}`];
+
+    if(ing && ing.trim() !== ""){
+      ingredients += `• ${measure ? measure.trim() : ""} ${ing}<br>`;
+    }
+  }
+
+  // ✅ Safe instructions
+  const instructions = item.strInstructions 
+    ? item.strInstructions.substring(0, 200) + "..."
+    : "No instructions available";
+
+  div.innerHTML += `
+    <div class="card">
+      <img src="${item.strMealThumb}">
+      <h3>${item.strMeal}</h3>
+
+      <p><b>Ingredients:</b><br>${ingredients}</p>
+
+      <p><b>Steps:</b><br>${instructions}</p>
+    </div>
+  `;
+});
+}
+function showLLM(id, items){
+
+const div = document.getElementById(id);
+div.innerHTML = "";
+
+items.forEach(item => {
+
+const ingredients = item.ingredients?.length
+  ? item.ingredients.map(i => "• " + i).join("<br>")
+  : "No ingredients";
+
+const steps = item.steps?.length
+  ? item.steps.map((s,i) => (i+1)+". "+s).join("<br>")
+  : "No steps";
+  div.innerHTML += `
+    <div class="card">
+      <img src="${item.image || 'https://via.placeholder.com/300'}">
+      <h3>${item.name}</h3>
+
+      <p><b>Ingredients:</b><br>${ingredients}</p>
+
+      <p><b>Steps:</b><br>${steps}</p>
+    </div>
+  `;
+});
+}
+</script>
+
+</body>
+</html>
